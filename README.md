@@ -9,5 +9,8 @@ pip install -r requirements.txt
 ```bash
 pip freeze > requirements.txt
 ```
-
+# activate env
+```bash
+source env/bin/activate
+```
 
