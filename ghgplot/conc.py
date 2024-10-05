@@ -173,3 +173,48 @@ def get_ch4_plot(site_code):
   plt.legend()
   plt.grid(True)
   return plt.show()
+
+def get_co2_plot(site_code):
+
+  github_repo_owner = "NASA-IMPACT"
+  github_repo_name = "noaa-viz"
+  folder_path_ch4, folder_path_co2 = "flask/ch4", "flask/co2"
+  combined_df_co2, combined_df_ch4 = pd.DataFrame(), pd.DataFrame()
+  def append_github_file(file_url):
+      response = requests.get(file_url)
+      response.raise_for_status()
+      return response.text
+
+  github_api_url = f"https://api.github.com/repos/{github_repo_owner}/{github_repo_name}/contents/{folder_path_co2}"
+  response = requests.get(github_api_url)
+  response.raise_for_status()
+  file_list_co2 = response.json()
+  warnings.filterwarnings("ignore")
+
+  for file_info in file_list_co2:
+      if file_info["name"].endswith("txt"):
+          file_content = append_github_file(file_info["download_url"])
+          Lines = file_content.splitlines()
+          index = Lines.index("# VARIABLE ORDER")+2
+          df_co2 = pd.read_csv(StringIO("\n".join(Lines[index:])), delim_whitespace=True)
+          combined_df_co2 = pd.concat([combined_df_co2, df_co2], ignore_index=True)
+
+  site_to_filter = site_code
+  filtered_df = combined_df_co2[combined_df_co2['site_code'] == site_to_filter]
+
+  filtered_df['datetime'] = pd.to_datetime(filtered_df['datetime'])
+
+  # Set the "Date" column as the index
+  filtered_df.set_index('datetime', inplace=True)
+
+  #############################
+  #filtered_df = filtered_df[(filtered_df['value'] >= 1700) & (filtered_df['value'] <= 2100)]
+  # Create a time series plot for 'Data' and 'Value'
+  plt.figure(figsize=(12, 6))
+  plt.plot(filtered_df.index, filtered_df['value'], label='Carbon Dioxide(CO2) Concentration (ppm)')
+  plt.xlabel("Observed Date/Time")
+  plt.ylabel("Carbon Dioxide(CO2) Concentration (ppm)")
+  plt.title(f"Observed Co2 Concentration {site_to_filter}")
+  plt.legend()
+  plt.grid(False)
+  return plt.show()

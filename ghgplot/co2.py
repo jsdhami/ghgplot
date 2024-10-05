@@ -12,6 +12,9 @@ from plotly.subplots import make_subplots
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
+def welcome():
+      return "Hello👋!"
+
 # Provide the STAC and RASTER API endpoints
 # The endpoint is referring to a location within the API that executes a request on a data collection nesting on the server.
 def flux(observation_date_1, observation_date_2, lat, lon):
@@ -47,7 +50,6 @@ def flux(observation_date_1, observation_date_2, lat, lon):
                                            .set_table_styles([
     {
         'selector': 'th.col0, td.col0',    # Select the first column
-        
         'props': [('min-width', '200px'),  # Set a minimum width
                   ('text-align', 'left')]  # Align text to the left
     },
@@ -327,6 +329,72 @@ def aoimap(lat1,lon1,lat2,lon2,lat3,lon3,lat4,lon4):
     folium.GeoJson(california_coast_aoi, name="Coastal California").add_to(aoi_map)
     # Visualize the map
     return aoi_map
+
+from collections.abc import Collection
+STAC_API_URL = "https://earth.gov/ghgcenter/api/stac"
+RASTER_API_URL = "https://earth.gov/ghgcenter/api/raster"
+collection_name = "eccodarwin-co2flux-monthgrid-v5"
+asset_name = "co2"
+# The bounding box should be passed to the geojson param as a geojson Feature or FeatureCollection
+# Create a function that retrieves information regarding a specific granule using its asset name and raster identifier and generates the statistics for it
+def print_stats(lat1,lon1,lat2,lon2,lat3,lon3,lat4,lon4,yyyymm):
+
+  # The function takes an item (granule) and a JSON (polygon) as input parameters
+  def generate_stats(item, geojson):
+
+      # A POST request is made to submit the data associated with the item of interest (specific observation) within the boundaries of the polygon to compute its statistics
+      result = requests.post(
+
+          # Raster API Endpoint for computing statistics
+          f"{RASTER_API_URL}/cog/statistics",
+
+          # Pass the URL to the item, asset name, and raster identifier as parameters
+          params={"url": item["assets"][asset_name]["href"]},
+
+          # Send the GeoJSON object (polygon) along with the request
+          json=geojson,
+
+      # Return the response in JSON format
+      ).json()
+
+
+      # Return a dictionary containing the computed statistics along with the item's datetime information.
+      return {
+          **result["properties"],
+          "datetime": item["properties"]["start_datetime"],
+      }
+      # Check the total number of items available within the collection
+  items = requests.get(
+      f"{STAC_API_URL}/collections/{collection_name}/items?limit=600"
+  ).json()["features"]
+  # Generate a for loop that iterates over all the existing items in the collection
+
+  # Generate statistics using the created function "generate_stats" within the bounding box defined by the aoi polygon
+  stats = {}
+
+
+  california_coast_aoi = {
+      "type": "Feature", # Create a feature object
+      "properties": {},
+      "geometry": { # Set the bounding coordinates for the polygon
+          "coordinates": [
+              [
+                  [lon1, lat1], # North-west bounding coordinate
+                  [lon2, lat2], # North-east bounding coordinate
+                  [lon3, lat3], # South-east bounding coordinate
+                  [lon4, lat4], # South-west bounding coordinate
+                  [lon1, lat1]  # North-west bounding coordinate (closing the polygon)
+              ]
+          ],
+          "type": "Polygon",
+      },
+  }
+
+  for item in items:
+      date = item["properties"]["start_datetime"]  # Get the associated date
+      year_month = date[:7].replace('-', '')  # Convert datetime to year-month
+      stats[year_month] = generate_stats(item, california_coast_aoi)
+  return stats[str(yyyymm)]
 
 
 def time_series(lat1,lon1,lat2,lon2,lat3,lon3,lat4,lon4,):
