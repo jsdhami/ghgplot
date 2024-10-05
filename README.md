@@ -1,6 +1,6 @@
 Sure! Here's the README content formatted with Markdown headers (`#`) so you can easily upload it to GitHub:
 
-```markdown
+
 # Greenhouse Gas Data Analysis with `ghgplot`
 
 Welcome to the Greenhouse Gas Data Analysis project! This repository contains tools and scripts for analyzing greenhouse gas (GHG) data, including CO2 flux, CH4 and CO2 concentrations, and CO mixing ratios.
