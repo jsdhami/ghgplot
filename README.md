@@ -26,8 +26,8 @@ This project leverages the `ghgplot` library to provide tools for analyzing vari
 To get started, clone the repository and install the required dependencies:
 
 ```bash
-git clone https://github.com/NASA-IMPACT/noaa-viz.git
-cd noaa-viz
+git clone https://github.com/jsdhami/ghgplot.git
+cd ghgplot
 pip install -r requirements.txt
 ```
 
